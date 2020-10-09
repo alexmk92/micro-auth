@@ -2,10 +2,11 @@ import { __prod__ } from './constants'
 import { Project } from './entities/Project'
 import { MikroORM } from '@mikro-orm/core'
 import path from 'path'
+import { User } from './entities/User'
 
 export default {
-    entities: [Project],
-    dbName: 'posterspy',
+    entities: [Project, User],
+    dbName: 'public',
     debug: !__prod__,
     type: 'postgresql',
     user: 'postgres',

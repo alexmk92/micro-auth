@@ -5,7 +5,7 @@ import { ObjectType, Field } from 'type-graphql'
 @Entity()
 export class Project {
     @Field(() => String)
-    @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_u' })
+    @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
     id!: string
 
     @Field(() => String)
