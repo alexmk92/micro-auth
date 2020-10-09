@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { MikroORM } from '@mikro-orm/core'
 import { __cookieName__, __port__, __prod__, __secrets__ } from './constants'
 import mikroOrmConfig from './mikro-orm.config'
