@@ -1,9 +1,9 @@
 import { User } from '../entities/User'
 import { PsContext } from 'src/types'
 import { Resolver, Mutation, Query, Arg, InputType, Field, Ctx, ObjectType } from 'type-graphql'
-import { sign } from 'jsonwebtoken'
 import argon2 from 'argon2'
-import { __jwtSecret__ } from '../constants'
+import { __secrets__ } from '../constants'
+import { createAccessToken, createRefreshToken } from '../auth'
 
 @InputType()
 class EmailPasswordInput {
@@ -73,7 +73,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async register(
         @Arg('credentials') credentials: EmailPasswordInput,
-        @Ctx() { em, req }: PsContext
+        @Ctx() { em }: PsContext
     ): Promise<UserResponse> {
         const { email, password } = credentials
         if (email.length <= 2) {
@@ -96,11 +96,8 @@ export class UserResolver {
 
         try {
             const hashedPassword = await argon2.hash(password)
-            const user = em.create(User, { email, password: hashedPassword })
+            const user = em.create(User, { email, password: hashedPassword, username: email })
             await em.persistAndFlush(user)
-
-            // Store user id session to set a cookie on the user to keep them logged in
-            req.session.userId = user.id
 
             return { user }
         } catch (e) {
@@ -118,7 +115,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async login(
         @Arg('credentials') credentials: EmailPasswordInput,
-        @Ctx() { em, req }: PsContext
+        @Ctx() { em, res }: PsContext
     ): Promise<UserResponse> {
         const { email, password } = credentials
         const user = await em.findOne(User, { email })
@@ -143,14 +140,15 @@ export class UserResolver {
             }
         }
 
-        req.session.userId = user.id
+        res.cookie('jid', createRefreshToken(user), { httpOnly: true })
 
-        const auth: Auth = {
-            accessToken: sign({ userId: user.id, email }, __jwtSecret__, { expiresIn: '15m' }),
-            provider: 'email'
+        return {
+            user,
+            auth: {
+                accessToken: createAccessToken(user),
+                provider: 'email'
+            }
         }
-
-        return { user, auth }
     }
 }
 

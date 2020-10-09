@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/core'
-import { __cookieName__, __port__, __prod__, __redisSecret__ } from './constants'
+import { __cookieName__, __port__, __prod__, __secrets__ } from './constants'
 import mikroOrmConfig from './mikro-orm.config'
 import express from 'express'
 import { ApolloServer } from 'apollo-server-express'
@@ -31,7 +31,7 @@ import connectRedis from 'connect-redis'
                 secure: __prod__ // cookie only works in https
             },
             saveUninitialized: false,
-            secret: __redisSecret__,
+            secret: __secrets__.redis,
             resave: false
         })
     )
