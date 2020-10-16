@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
-import { ObjectType, Field } from 'type-graphql'
+import { ObjectType, Field, Int } from 'type-graphql'
 
 @ObjectType()
 @Entity()
@@ -30,4 +30,24 @@ export class User {
     @Field(() => String)
     @Property({ type: 'date', onUpdate: () => new Date() })
     updatedAt = new Date()
+
+    @Field(() => Int)
+    @Property({ default: 0 })
+    tokenVersion: number
+
+    @Field(() => String)
+    @Property({ nullable: true })
+    twitter_id: String
+
+    @Field(() => String)
+    @Property({ nullable: true })
+    twitter_username: String
+
+    @Field(() => String)
+    @Property({ nullable: true })
+    facebook_id: String
+
+    @Field(() => String)
+    @Property({ nullable: true })
+    facebook_username: String
 }

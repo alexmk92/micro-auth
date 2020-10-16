@@ -1,79 +1,55 @@
 import { User } from '../entities/User'
 import { PsContext } from 'src/types'
-import { Resolver, Mutation, Query, Arg, InputType, Field, Ctx, ObjectType } from 'type-graphql'
+import { Resolver, Mutation, Query, Arg, Ctx, UseMiddleware } from 'type-graphql'
 import argon2 from 'argon2'
 import { __secrets__ } from '../constants'
-import { createAccessToken, createRefreshToken } from '../auth'
-
-@InputType()
-class EmailPasswordInput {
-    @Field()
-    email: string
-
-    @Field()
-    password: string
-}
-
-@ObjectType()
-class FieldError {
-    @Field()
-    field: string
-
-    @Field()
-    message: string
-}
-
-@ObjectType()
-class Auth {
-    @Field()
-    accessToken?: string
-
-    @Field()
-    provider?: 'email' | 'twitter' | 'google'
-}
-
-@ObjectType()
-class UserResponse {
-    @Field(() => [FieldError], { nullable: true })
-    errors?: FieldError[]
-
-    @Field(() => User, { nullable: true })
-    user?: User
-
-    @Field(() => Auth, { nullable: true })
-    auth?: Auth
-}
+import { createAccessToken, createRefreshToken, isAuthenticated, sendRefreshToken } from '../auth'
+import { CredentialInput, UserResponse } from '../types.gql'
 
 @Resolver()
 export class UserResolver {
-    @Query(() => UserResponse)
-    async me(@Ctx() { req, em }: PsContext): Promise<UserResponse> {
-        if (!req.session.userId) {
-            return {
-                errors: [{
-                    field: '',
-                    message: 'Session has no user id'
-                }]
-            }
-        }
+    @Query(() => String)
+    @UseMiddleware(isAuthenticated)
+    async test(@Ctx() { payload }: PsContext) {
+        return `your user id is: ${payload!.userId}`
+    }
 
-        const user = await em.findOne(User, { id: req.session.userId })
-        if (!user) {
+    @Query(() => UserResponse)
+    @UseMiddleware(isAuthenticated)
+    async me(@Ctx() { payload, em }: PsContext): Promise<UserResponse> {
+        try {
+            const user = await em.findOneOrFail(User, { id: payload!.userId })
+            return { user }
+        } catch {
             return {
                 errors: [{
                     field: 'id',
-                    message: `Session user was invalid`
+                    message: `Invalid user id passed.`
                 }]
             }
         }
+    }
 
-        return { user }
+    @Mutation(() => Boolean)
+    async revokeRefreshTokensForUser(
+        @Arg('userId', () => String) userId: string,
+        @Ctx() { em }: PsContext
+    ): Promise<Boolean> {
+        try {
+            const user = await em.findOneOrFail(User, { id: userId })
+            user.tokenVersion++;
+            const rowsAffected = await em.nativeUpdate(User, { id: userId }, user)
+
+            return rowsAffected > 0
+        } catch {
+            return false
+        }
     }
 
     @Mutation(() => UserResponse)
     async register(
-        @Arg('credentials') credentials: EmailPasswordInput,
-        @Ctx() { em }: PsContext
+        @Arg('credentials') credentials: CredentialInput,
+        @Ctx() { em, res }: PsContext
     ): Promise<UserResponse> {
         const { email, password } = credentials
         if (email.length <= 2) {
@@ -99,7 +75,15 @@ export class UserResolver {
             const user = em.create(User, { email, password: hashedPassword, username: email })
             await em.persistAndFlush(user)
 
-            return { user }
+            sendRefreshToken(res, createRefreshToken(user))
+
+            return {
+                user,
+                auth: {
+                    accessToken: createAccessToken(user),
+                    provider: 'email'
+                }
+            }
         } catch (e) {
             const message = e.code == 23505 ? 'username already in use' : 'Unknown error'
             const field = e.code == 23505 ? 'username' : ''
@@ -112,9 +96,15 @@ export class UserResolver {
         }
     }
 
+    @Mutation(() => Boolean)
+    async logout(@Ctx() { res }: PsContext): Promise<Boolean> {
+        sendRefreshToken(res, '')
+        return true
+    }
+
     @Mutation(() => UserResponse)
     async login(
-        @Arg('credentials') credentials: EmailPasswordInput,
+        @Arg('credentials') credentials: CredentialInput,
         @Ctx() { em, res }: PsContext
     ): Promise<UserResponse> {
         const { email, password } = credentials
@@ -140,7 +130,7 @@ export class UserResolver {
             }
         }
 
-        res.cookie('jid', createRefreshToken(user), { httpOnly: true })
+        sendRefreshToken(res, createRefreshToken(user))
 
         return {
             user,
