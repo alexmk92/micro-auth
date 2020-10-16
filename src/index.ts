@@ -5,7 +5,6 @@ import mikroOrmConfig from './mikro-orm.config'
 import express from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
-import { ProjectResolver } from './resolvers/project'
 import { UserResolver } from './resolvers/user'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
@@ -34,7 +33,7 @@ import routes from './routes'
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [ProjectResolver, UserResolver],
+            resolvers: [UserResolver],
             validate: false
         }),
         context: ({ req, res }) => ({

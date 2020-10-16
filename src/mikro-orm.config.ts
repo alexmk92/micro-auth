@@ -1,11 +1,10 @@
 import { __db__ } from './constants'
-import { Project } from './entities/Project'
 import { MikroORM } from '@mikro-orm/core'
 import path from 'path'
 import { User } from './entities/User'
 
 export default {
-    entities: [Project, User],
+    entities: [User],
     dbName: __db__.name,
     host: __db__.host,
     debug: __db__.debug,
