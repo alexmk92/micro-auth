@@ -1,5 +1,5 @@
 export const __prod__ = process.env.NODE_ENV === 'production'
-export const __port__ = process.env.PORT || 4007
+export const __port__ = process.env.PORT || 4008
 export const __redis__ = {
   host: process.env.REDIS_HOST || 'localhost',
   port: process.env.REDIS_PORT || 6379

@@ -4,9 +4,15 @@ import passport from 'passport'
 import { __domain__ } from '../constants'
 import { providers } from '../provider-registry'
 import { sendRefreshToken } from '../auth'
+import { Response } from 'express'
 
 export default function (_orm: MikroORM): Router {
   const router = Router()
+
+  const flushUnwantedCookies = (res: Response) => {
+    res.clearCookie('qid')
+    res.clearCookie('connect.sid')
+  }
 
   /**
    * Send the serialized refresh token back to the user in the jid
@@ -16,14 +22,16 @@ export default function (_orm: MikroORM): Router {
    * the auth flow is now fully managed by our refresh/access token
    */
   router.get('/success', (req, res) => {
+    flushUnwantedCookies(res)
+
     const token: string = req.user as string
-    req.cookies = []
     sendRefreshToken(res, token)
 
     res.redirect(__domain__)
   })
 
   router.get('/failure', (_req, res) => {
+    flushUnwantedCookies(res)
     // just BS that this was unauthorized for now...
     res.status(401).redirect(__domain__)
   })

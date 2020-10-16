@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { MikroORM } from '@mikro-orm/core'
 import { __port__, __prod__, __redis__, __secrets__ } from './constants'
 import mikroOrmConfig from './mikro-orm.config'
-import express from 'express'
+import express, { Response, Request, NextFunction } from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
 import { UserResolver } from './resolvers/user'
@@ -22,14 +22,26 @@ import routes from './routes'
     }
 
     const app = express()
-    app.use(cors({
-        origin: 'http://localhost:3001',
-        credentials: true
-    }))
 
     app.use(cookieParser())
     initSession(app)
     initPassport(app, orm.em)
+
+    /**
+     * We never want any of these cookies, just clear them out
+     * they're only applied as part of the session middleware
+     * for OAuth 2.0
+     */
+    app.use((_req: Request, res: Response, next: NextFunction) => {
+        res.clearCookie('qid')
+        res.clearCookie('connect.sid')
+        next()
+    })
+
+    app.use(cors({
+        origin: 'http://localhost:3001',
+        credentials: true
+    }))
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
