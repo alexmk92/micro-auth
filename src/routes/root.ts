@@ -4,9 +4,8 @@ import { Router } from 'express'
 import { createAccessToken, createRefreshToken, sendRefreshToken } from "../auth"
 import { User } from "../entities/User"
 import { verify } from "jsonwebtoken"
-import { MikroORM } from "@mikro-orm/core"
 
-export default function (orm: MikroORM): Router {
+export default function (): Router {
   const router = Router()
 
   router.post('/refresh_token', async (req, res) => {
@@ -28,7 +27,7 @@ export default function (orm: MikroORM): Router {
     }
 
     try {
-      const user = await orm.em.findOneOrFail(User, { id: payload!.userId })
+      const user = await User.findOneOrFail({ id: payload!.userId })
       // Ensure that the refresh token version matches that of the JWT
       if (user.tokenVersion !== payload.tokenVersion) {
         throw new Error('Token version mismatch, login again')

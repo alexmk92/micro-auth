@@ -1,53 +1,57 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 import { ObjectType, Field, Int } from 'type-graphql'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity } from 'typeorm'
 
 @ObjectType()
 @Entity()
-export class User {
+export class User extends BaseEntity {
     @Field(() => String)
-    @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
+    @PrimaryGeneratedColumn('uuid', { name: 'id' })
     id!: string
 
     @Field(() => String)
-    @Property({ type: 'text', unique: true })
+    @Column({ unique: true })
     email!: string;
 
     @Field(() => String)
-    @Property({ type: 'text', unique: true })
+    @Column({ unique: true })
     username!: string
 
-    @Property()
+    @Column({ nullable: true })
     password!: string
 
     @Field(() => String)
-    @Property({ type: 'text', nullable: true })
+    @Column({ nullable: true })
     bio: string
 
-    @Field(() => String)
-    @Property({ type: 'date' })
-    createdAt = new Date()
-
-    @Field(() => String)
-    @Property({ type: 'date', onUpdate: () => new Date() })
-    updatedAt = new Date()
-
     @Field(() => Int)
-    @Property({ default: 0 })
+    @Column({ default: 0 })
     tokenVersion: number
 
     @Field(() => String)
-    @Property({ nullable: true })
+    @Column({ nullable: true })
     twitter_id: String
 
     @Field(() => String)
-    @Property({ nullable: true })
+    @Column({ nullable: true })
     twitter_username: String
 
     @Field(() => String)
-    @Property({ nullable: true })
+    @Column({ nullable: true })
     facebook_id: String
 
     @Field(() => String)
-    @Property({ nullable: true })
+    @Column({ nullable: true })
     facebook_username: String
+
+    @Field(() => String)
+    @Column({ default: false })
+    confirmed_email: Boolean
+
+    @Field(() => String)
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @Field(() => String)
+    @UpdateDateColumn()
+    updatedAt: Date;
 }

@@ -1,4 +1,3 @@
-import { MikroORM } from '@mikro-orm/core'
 import { Router } from 'express'
 import passport from 'passport'
 import { __domain__ } from '../constants'
@@ -6,7 +5,7 @@ import { providers } from '../provider-registry'
 import { sendRefreshToken } from '../auth'
 import { Response } from 'express'
 
-export default function (_orm: MikroORM): Router {
+export default function (): Router {
   const router = Router()
 
   const flushUnwantedCookies = (res: Response) => {

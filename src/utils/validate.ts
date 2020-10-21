@@ -20,16 +20,17 @@ export const validateRegistration = (email: string, password: string) => {
   return errors
 }
 
-export const validateLogin = async (user: User | null, password: string) => {
+export const validateLogin = async (user: User | undefined, password: string) => {
   if (!user) {
     return [{
       field: 'email',
       message: `Could not find user`
     }]
   }
-
-  const valid = await argon2.verify(user.password, password)
-  if (!valid) {
+  // If a user signed up with social auth, then they may not have a password,
+  // in this scenario say its an invalid password without trying argon
+  const userPassword = user.password
+  if (!userPassword || !await argon2.verify(userPassword, password)) {
     return [{
       field: 'password',
       message: 'Invalid password'

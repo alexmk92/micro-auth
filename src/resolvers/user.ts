@@ -8,6 +8,7 @@ import { CredentialInput, UserResponse } from '../types.gql'
 import { validateLogin, validateRegistration } from '../utils/validate'
 import { sendEmail } from '../utils/send-email'
 import { v4 } from 'uuid'
+import { sendConfirmAccountEmail } from '../utils/confirm-account-email'
 
 @Resolver()
 export class UserResolver {
@@ -19,9 +20,9 @@ export class UserResolver {
 
     @Query(() => UserResponse)
     @UseMiddleware(isAuthenticated)
-    async me(@Ctx() { payload, em }: PsContext): Promise<UserResponse> {
+    async me(@Ctx() { payload }: PsContext): Promise<UserResponse> {
         try {
-            const user = await em.findOneOrFail(User, { id: payload!.userId })
+            const user = await User.findOneOrFail({ id: payload!.userId })
             return { user }
         } catch {
             return {
@@ -37,7 +38,7 @@ export class UserResolver {
     async resetPassword(
         @Arg('password') password: string,
         @Arg('token') token: string,
-        @Ctx() { res, em, redis }: PsContext
+        @Ctx() { res, redis }: PsContext
     ) {
         if (password.length <= 2) {
             return {
@@ -52,8 +53,9 @@ export class UserResolver {
 
         const cacheKey = `${__cacheRoots__.forgotPassword}:${token}`
         const userId = await redis.get(cacheKey)
+        const user = await User.findOne({ id: userId })
 
-        if (!userId) {
+        if (!user) {
             return {
                 errors: [{
                     field: 'other',
@@ -62,19 +64,19 @@ export class UserResolver {
             }
         }
 
-        await redis.del(cacheKey)
-        const user = await em.findOne(User, { id: userId })
-        if (!user) {
+        if (!user.confirmed_email) {
+            await sendConfirmAccountEmail(user)
             return {
                 errors: [{
                     field: 'other',
-                    message: 'unknown user'
+                    message: 'You need to confirm your email address before you can reset your password!'
                 }]
             }
         }
 
         user.password = await argon2.hash(password)
-        await em.persistAndFlush(user)
+        await user.save()
+        await redis.del(cacheKey)
 
         sendRefreshToken(res, createRefreshToken(user!))
 
@@ -90,9 +92,9 @@ export class UserResolver {
     @Mutation(() => Boolean)
     async forgotPassword(
         @Arg('email') email: string,
-        @Ctx() { em, redis }: PsContext
+        @Ctx() { redis }: PsContext
     ) {
-        const user = await em.findOne(User, { email })
+        const user = await User.findOne({ email })
         if (!user) {
             // Protect against phishing...
             return true
@@ -109,15 +111,14 @@ export class UserResolver {
 
     @Mutation(() => Boolean)
     async revokeRefreshTokensForUser(
-        @Arg('userId', () => String) userId: string,
-        @Ctx() { em }: PsContext
+        @Arg('userId', () => String) userId: string
     ): Promise<Boolean> {
         try {
-            const user = await em.findOneOrFail(User, { id: userId })
+            const user = await User.findOneOrFail({ id: userId })
             user.tokenVersion++;
-            const rowsAffected = await em.nativeUpdate(User, { id: userId }, user)
+            const rows = await User.update({ id: userId }, user)
 
-            return rowsAffected > 0
+            return rows.affected ? rows.affected > 0 : false
         } catch {
             return false
         }
@@ -126,7 +127,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async register(
         @Arg('credentials') credentials: CredentialInput,
-        @Ctx() { em, res }: PsContext
+        @Ctx() { res }: PsContext
     ): Promise<UserResponse> {
         const { email, password } = credentials
         const errors = validateRegistration(email, password)
@@ -136,10 +137,11 @@ export class UserResolver {
 
         try {
             const hashedPassword = await argon2.hash(password)
-            const user = em.create(User, { email, password: hashedPassword, username: email })
-            await em.persistAndFlush(user)
+            const user = User.create({ email, password: hashedPassword, username: email })
+            await user.save()
 
             sendRefreshToken(res, createRefreshToken(user))
+            await sendConfirmAccountEmail(user)
 
             return {
                 user,
@@ -166,14 +168,34 @@ export class UserResolver {
         return true
     }
 
+    @Mutation(() => Boolean)
+    async confirmEmail(
+        @Arg('token') token: String,
+        @Ctx() { res, redis }: PsContext
+    ): Promise<Boolean> {
+        try {
+            const cacheKey = `${__cacheRoots__.confirmAccount}:${token}`
+            const userId = await redis.get(cacheKey);
+            const user = await User.findOneOrFail(userId)
+            user.confirmed_email = true
+            await redis.del(cacheKey)
+
+            sendRefreshToken(res, createRefreshToken(user))
+
+            return true
+        } catch (e) {
+            return false
+        }
+    }
+
     @Mutation(() => UserResponse)
     async login(
         @Arg('credentials') credentials: CredentialInput,
-        @Ctx() { em, res }: PsContext
+        @Ctx() { res }: PsContext
     ): Promise<UserResponse> {
         const { email, password } = credentials
         const searchCriteria = email.includes('@') ? { email } : { username: email }
-        const user = await em.findOne(User, searchCriteria)
+        const user = await User.findOne(searchCriteria)
         const errors = await validateLogin(user, password)
         if (errors.length > 0) {
             return { errors }

@@ -1,4 +1,3 @@
-import { EntityManager } from '@mikro-orm/core'
 import passport from 'passport'
 import { __cookieName__, __prod__, __redis__, __secrets__, __socialProviders__ } from '../constants'
 import { User } from '../entities/User'
@@ -16,7 +15,7 @@ import { createRefreshToken } from '../auth'
  *    the user in the done() callback
  * 3) 
  */
-export default (app: Express, em: EntityManager): Express => {
+export default (app: Express): Express => {
   // OAuth 2.0 requires sessions, so we ensure the middleware
   // is set before doing any OAuthy jazz...
   app.use(passport.initialize())
@@ -39,7 +38,7 @@ export default (app: Express, em: EntityManager): Express => {
     }
   })
 
-  passport.use(TwitterStrategy(em))
+  passport.use(TwitterStrategy())
   // register other strategies here...
 
   return app

@@ -3,7 +3,7 @@ import { __redis__ } from '../constants'
 
 let _cache: Redis.Redis | null = null
 
-export const initCache = () => {
+export const initCache = (): Redis.Redis => {
   if (!_cache) {
     _cache = new Redis({
       host: __redis__.host,
@@ -16,5 +16,13 @@ export const initCache = () => {
     }
   }
 
-  return _cache
+  return _cache!
+}
+
+export const getCache = (): Redis.Redis => {
+  if (!_cache) {
+    return initCache()
+  }
+
+  return _cache!;
 }

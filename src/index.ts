@@ -1,7 +1,5 @@
 import 'dotenv/config'
-import { MikroORM } from '@mikro-orm/core'
-import { __port__, __prod__, __redis__, __secrets__ } from './constants'
-import mikroOrmConfig from './mikro-orm.config'
+import { __db__, __port__, __prod__, __redis__, __secrets__ } from './constants'
 import express, { Response, Request, NextFunction } from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
@@ -12,21 +10,27 @@ import initPassport from './passport'
 import { initSession } from './configure/session'
 import routes from './routes'
 import { initCache } from './configure/cache'
+import { createConnection } from 'typeorm'
+import { User } from './entities/User'
 
 (async () => {
-    const cache = initCache()
-    const orm = await MikroORM.init(mikroOrmConfig)
-    try {
-        await orm.getMigrator().up()
-    } catch (e) {
-        // no worries
-    }
+    await createConnection({
+        type: 'postgres',
+        database: __db__.name,
+        host: __db__.host,
+        username: __db__.user,
+        password: __db__.password,
+        logging: true,
+        synchronize: !__prod__,
+        entities: [User]
+    })
 
+    const cache = initCache()
     const app = express()
 
     app.use(cookieParser())
     initSession(app)
-    initPassport(app, orm.em)
+    initPassport(app)
 
     /**
      * We never want any of these cookies, just clear them out
@@ -50,7 +54,6 @@ import { initCache } from './configure/cache'
             validate: false
         }),
         context: ({ req, res }) => ({
-            em: orm.em,
             req,
             res,
             redis: cache
@@ -65,7 +68,7 @@ import { initCache } from './configure/cache'
         console.info(`Server started and listening on  localhost:${__port__}`)
     })
 
-    routes(orm).map(({ namespace, router }) => {
+    routes().map(({ namespace, router }) => {
         app.use(`/${namespace}`, router)
     })
 })().catch(e => {
