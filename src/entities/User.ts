@@ -5,7 +5,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 @Entity()
 export class User extends BaseEntity {
     @Field(() => String)
-    @PrimaryGeneratedColumn('uuid', { name: 'id' })
+    @PrimaryGeneratedColumn('uuid')
     id!: string
 
     @Field(() => String)
@@ -24,34 +24,34 @@ export class User extends BaseEntity {
     bio: string
 
     @Field(() => Int)
-    @Column({ default: 0 })
+    @Column({ default: 0, name: 'token_version' })
     tokenVersion: number
 
     @Field(() => String)
-    @Column({ nullable: true })
-    twitter_id: String
+    @Column({ nullable: true, name: 'twitter_id' })
+    twitterId: String
 
     @Field(() => String)
-    @Column({ nullable: true })
-    twitter_username: String
+    @Column({ nullable: true, name: 'twitter_username' })
+    twitterUsername: String
 
     @Field(() => String)
-    @Column({ nullable: true })
-    facebook_id: String
+    @Column({ nullable: true, name: 'facebook_id' })
+    facebookId: String
 
     @Field(() => String)
-    @Column({ nullable: true })
-    facebook_username: String
+    @Column({ nullable: true, name: 'facebook_username' })
+    facebookUsername: String
+
+    @Field(() => Boolean)
+    @Column({ nullable: true, name: 'confirmed_email' })
+    confirmedEmail: boolean
 
     @Field(() => String)
-    @Column({ default: false })
-    confirmed_email: Boolean
-
-    @Field(() => String)
-    @CreateDateColumn()
+    @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
     @Field(() => String)
-    @UpdateDateColumn()
+    @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 }

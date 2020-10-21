@@ -20,8 +20,8 @@ export const TwitterStrategy = (): Strategy => {
       user = User.create({ email: profile.displayName, username: profile.username })
     }
 
-    user.twitter_id = profile.id
-    user.twitter_username = profile.username
+    user.twitterId = profile.id
+    user.twitterUsername = profile.username
 
     await user.save()
     done(null, user)

@@ -64,7 +64,7 @@ export class UserResolver {
             }
         }
 
-        if (!user.confirmed_email) {
+        if (!user.confirmedEmail) {
             await sendConfirmAccountEmail(user)
             return {
                 errors: [{
@@ -177,7 +177,7 @@ export class UserResolver {
             const cacheKey = `${__cacheRoots__.confirmAccount}:${token}`
             const userId = await redis.get(cacheKey);
             const user = await User.findOneOrFail(userId)
-            user.confirmed_email = true
+            user.confirmedEmail = true
             await redis.del(cacheKey)
 
             sendRefreshToken(res, createRefreshToken(user))

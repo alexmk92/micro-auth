@@ -10,7 +10,7 @@ export const __db__ = {
   password: process.env.DB_PASS || 'postgrespassword',
   driver: process.env.DB_DRIVER || 'postgresql',
   port: process.env.DB_PORT || 5432,
-  name: process.env.DB_NAME || 'public',
+  name: process.env.DB_NAME || 'postgres',
   debug: !__prod__
 }
 export const __cookieName__ = process.env.COOKIE_NAME || 'qid'

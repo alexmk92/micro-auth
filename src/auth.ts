@@ -10,11 +10,12 @@ export const createAccessToken = (user: User, minutesToLive: number = 15): strin
   const { id, email } = user
   const hasura = {
     'x-hasura-user-id': user.id,
-    'x-hasura-role': ['guest', 'user']
+    'x-hasura-role': ['guest', 'user'],
+    'x-hasura-default-role': 'user'
   }
 
   return sign(
-    { userId: id, email, ...hasura },
+    { userId: id, email, 'https://hasura.io/jwt/claims': { ...hasura } },
     __secrets__.jwt,
     { expiresIn: `${minutesToLive}m` }
   )
