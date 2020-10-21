@@ -11,9 +11,10 @@ import cors from 'cors'
 import initPassport from './passport'
 import { initSession } from './configure/session'
 import routes from './routes'
-
+import { initCache } from './configure/cache'
 
 (async () => {
+    const cache = initCache()
     const orm = await MikroORM.init(mikroOrmConfig)
     try {
         await orm.getMigrator().up()
@@ -51,7 +52,8 @@ import routes from './routes'
         context: ({ req, res }) => ({
             em: orm.em,
             req,
-            res
+            res,
+            redis: cache
         })
     })
 

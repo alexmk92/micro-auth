@@ -8,9 +8,13 @@ import { Provider, SessionResponse } from "./types.gql";
 
 export const createAccessToken = (user: User, minutesToLive: number = 15): string => {
   const { id, email } = user
+  const hasura = {
+    'x-hasura-user-id': user.id,
+    'x-hasura-role': ['guest', 'user']
+  }
 
   return sign(
-    { userId: id, email },
+    { userId: id, email, ...hasura },
     __secrets__.jwt,
     { expiresIn: `${minutesToLive}m` }
   )
@@ -37,22 +41,23 @@ export const sendRefreshToken = (res: Response, token: string) => {
 }
 
 export const isAuthenticated: MiddlewareFn<PsContext> = ({ context }, next) => {
-  const { req } = context
+  const { req, res } = context
   const authorization = req.headers['authorization']
 
   if (!authorization) {
-    throw new Error('Not authenticated')
+    res.status(401)
+    return next()
   }
 
   try {
-    const token = authorization?.split(' ')[1]
+    const token = authorization!.split(' ')[1]
     console.log(token)
     const payload = verify(token, __secrets__.jwt)
 
     context.payload = payload as any
   } catch (e) {
     console.log(e)
-    throw new Error('Not authenticated')
+    res.status(401)
   }
 
   return next()

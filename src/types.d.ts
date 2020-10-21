@@ -1,10 +1,12 @@
 import { EntityManager, IDatabaseDriver, Connection } from "@mikro-orm/core";
 import { Request, Response, Router } from 'express'
+import { Redis } from "ioredis";
 
 export type PsContext = {
     em: EntityManager<any> & EntityManager<IDatabaseDriver<Connection>>,
     req: Request & { session: Express.Session },
     res: Response,
+    redis: Redis.Redis,
     payload?: { userId: string }
 }
 

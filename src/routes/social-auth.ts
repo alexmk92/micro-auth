@@ -27,13 +27,7 @@ export default function (_orm: MikroORM): Router {
     const token: string = req.user as string
     sendRefreshToken(res, token)
 
-    res.redirect(__domain__)
-  })
-
-  router.get('/failure', (_req, res) => {
-    flushUnwantedCookies(res)
-    // just BS that this was unauthorized for now...
-    res.status(401).redirect(__domain__)
+    res.redirect(`${__domain__}/auth/success?token=${token}`)
   })
 
   /**
@@ -58,7 +52,8 @@ export default function (_orm: MikroORM): Router {
 
     router.get(`/${name}/callback`, passport.authenticate(`${name}`, {
       successRedirect: '/auth/success',
-      failureRedirect: '/auth/failure',
+      // handle this properly in future!
+      failureRedirect: '/auth/success',
     }));
   })
 
