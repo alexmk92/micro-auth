@@ -8,14 +8,17 @@ import { Provider, SessionResponse } from "./types.gql";
 
 export const createAccessToken = (user: User, minutesToLive: number = 15): string => {
   const { id, email } = user
-  const hasura = {
-    'x-hasura-user-id': user.id,
-    'x-hasura-role': ['guest', 'user'],
-    'x-hasura-default-role': 'user'
-  }
 
   return sign(
-    { userId: id, email, 'https://hasura.io/jwt/claims': { ...hasura } },
+    {
+      userId: id,
+      email,
+      'https://hasura.io/jwt/claims': {
+        'x-hasura-user-id': user.id,
+        'x-hasura-role': ['guest', 'user'],
+        'x-hasura-default-role': 'user'
+      }
+    },
     __secrets__.jwt,
     { expiresIn: `${minutesToLive}m` }
   )
