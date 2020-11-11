@@ -1,3 +1,4 @@
+import { HasuraPermissions, HasuraRole } from 'src/types';
 import { ObjectType, Field, Int } from 'type-graphql'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity } from 'typeorm'
 
@@ -54,4 +55,27 @@ export class User extends BaseEntity {
     @Field(() => String)
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    validUserId = (): Boolean => {
+        return (this.id !== null && this.id !== 'GUEST')
+    }
+
+    getHasuraPermissions = (): HasuraPermissions => {
+        const validUserId = this.validUserId()
+
+        const allowedRoles: HasuraRole[] = validUserId
+            ? ['guest', 'user']
+            : ['guest']
+
+        const defaultRole: HasuraRole = validUserId
+            ? 'user'
+            : 'guest'
+
+        const permissions: HasuraPermissions = {
+            allowedRoles,
+            defaultRole
+        }
+
+        return permissions
+    }
 }

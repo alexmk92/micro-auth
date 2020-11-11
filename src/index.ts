@@ -1,6 +1,7 @@
+import 'reflect-metadata'
 import 'dotenv/config'
-import { __db__, __port__, __prod__, __redis__, __secrets__ } from './constants'
-import express, { Response, Request, NextFunction } from 'express'
+import { __db__, __domain__, __port__, __prod__, __redis__, __secrets__ } from './constants'
+import express from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
 import { UserResolver } from './resolvers/user'
@@ -32,19 +33,8 @@ import { User } from './entities/User'
     initSession(app)
     initPassport(app)
 
-    /**
-     * We never want any of these cookies, just clear them out
-     * they're only applied as part of the session middleware
-     * for OAuth 2.0
-     */
-    app.use((_req: Request, res: Response, next: NextFunction) => {
-        res.clearCookie('qid')
-        res.clearCookie('connect.sid')
-        next()
-    })
-
     app.use(cors({
-        origin: 'http://localhost:3001',
+        origin: __domain__,
         credentials: true
     }))
 
@@ -64,12 +54,16 @@ import { User } from './entities/User'
         app, cors: false
     })
 
-    app.listen(__port__, () => {
-        console.info(`Server started and listening on  localhost:${__port__}`)
-    })
-
     routes().map(({ namespace, router }) => {
         app.use(`/${namespace}`, router)
+    })
+
+    app.get('/', (_req, res) => {
+        res.send('hi')
+    })
+
+    app.listen(__port__, () => {
+        console.info(`Server started and listening on  localhost:${__port__}`)
     })
 })().catch(e => {
     console.error(e)

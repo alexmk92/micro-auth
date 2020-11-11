@@ -28,3 +28,11 @@ export type ProviderInfo = {
     name: Provider
     scope: Array<Scope> // further enforce this type later.
 }
+
+export type HasuraRole = 'guest' | 'admin' | 'user'
+
+export type HasuraPermissions = {
+    userId?: string,
+    defaultRole: HasuraRole,
+    allowedRoles: Array<HasuraRole>
+}

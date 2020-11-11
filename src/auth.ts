@@ -6,21 +6,25 @@ import { PsContext } from "./types";
 import { Response } from 'express'
 import { Provider, SessionResponse } from "./types.gql";
 
-export const createAccessToken = (user: User, minutesToLive: number = 15): string => {
-  const { id, email } = user
+export const createAccessToken = (user: User, minutesToLive?: number): string => {
+  const ttl = minutesToLive || 15
+  const userId = user.id || 'GUEST'
+  const additions = user ? { email: user.email } : {}
+
+  const permissions = user.getHasuraPermissions()
 
   return sign(
     {
-      userId: id,
-      email,
+      userId,
+      ...additions,
       'https://hasura.io/jwt/claims': {
-        'x-hasura-user-id': user.id,
-        'x-hasura-role': ['guest', 'user'],
-        'x-hasura-default-role': 'user'
+        'x-hasura-user-id': userId,
+        'x-hasura-allowed-roles': permissions.allowedRoles,
+        'x-hasura-default-role': permissions.defaultRole
       }
     },
     __secrets__.jwt,
-    { expiresIn: `${minutesToLive}m` }
+    { expiresIn: `${ttl}m` }
   )
 }
 
