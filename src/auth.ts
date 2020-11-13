@@ -17,11 +17,7 @@ export const createAccessToken = (user: User, minutesToLive?: number): string =>
     {
       userId,
       ...additions,
-      'https://hasura.io/jwt/claims': {
-        'x-hasura-user-id': userId,
-        'x-hasura-allowed-roles': permissions.allowedRoles,
-        'x-hasura-default-role': permissions.defaultRole
-      }
+      'https://hasura.io/jwt/claims': permissions
     },
     __secrets__.jwt,
     { expiresIn: `${ttl}m` }
@@ -43,7 +39,7 @@ export const createRefreshToken = (user: User, daysToLive: number = 7): string =
 export const sendRefreshToken = (res: Response, token: string) => {
   res.cookie('jid', token, {
     httpOnly: true,
-    //path: '/refresh_token'
+    path: '/'
     // domain: '.domain.com' // For prod only!
   })
 }

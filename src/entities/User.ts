@@ -57,7 +57,15 @@ export class User extends BaseEntity {
     updatedAt: Date;
 
     validUserId = (): Boolean => {
-        return (this.id !== null && this.id !== 'GUEST')
+        return this.getId() !== 'GUEST'
+    }
+
+    getId = (): string => {
+        if (this.id !== null) {
+            return this.id
+        }
+
+        return 'GUEST'
     }
 
     getHasuraPermissions = (): HasuraPermissions => {
@@ -71,9 +79,16 @@ export class User extends BaseEntity {
             ? 'user'
             : 'guest'
 
+        const userRole = defaultRole // in future make this a property on user
+
         const permissions: HasuraPermissions = {
-            allowedRoles,
-            defaultRole
+            'x-hasura-user-id': this.getId(),
+            'x-hasura-allowed-roles': allowedRoles,
+            'x-hasura-default-role': defaultRole
+        }
+
+        if (userRole) {
+            permissions['x-hasura-user-role'] = userRole
         }
 
         return permissions

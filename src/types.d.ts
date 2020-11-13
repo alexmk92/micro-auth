@@ -32,7 +32,8 @@ export type ProviderInfo = {
 export type HasuraRole = 'guest' | 'admin' | 'user'
 
 export type HasuraPermissions = {
-    userId?: string,
-    defaultRole: HasuraRole,
-    allowedRoles: Array<HasuraRole>
+    'x-hasura-user-id': string,
+    'x-hasura-default-role': HasuraRole,
+    'x-hasura-allowed-roles': Array<HasuraRole>,
+    'x-hasura-user-role'?: string
 }
