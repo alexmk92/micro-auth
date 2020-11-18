@@ -46,4 +46,4 @@ export const __cacheRoots__ = {
   confirmAccount: 'confirm-account'
 }
 
-export const __domain__ = process.env.DOMAIN || 'http://localhost:3002'
+export const __domain__ = process.env.DOMAIN || 'http://localhost:3003'

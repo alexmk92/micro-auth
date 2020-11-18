@@ -1,4 +1,4 @@
-import { __secrets__ } from "./constants";
+import { __domain__, __prod__, __secrets__ } from "./constants";
 import { User } from './entities/User';
 import { sign, verify } from 'jsonwebtoken'
 import { MiddlewareFn } from 'type-graphql'
@@ -26,7 +26,6 @@ export const createAccessToken = (user: User, minutesToLive?: number): string =>
 
 export const createRefreshToken = (user: User, daysToLive: number = 7): string => {
   const { id, email, tokenVersion } = user
-
   return sign(
     {
       userId: id, email, tokenVersion
@@ -39,8 +38,8 @@ export const createRefreshToken = (user: User, daysToLive: number = 7): string =
 export const sendRefreshToken = (res: Response, token: string) => {
   res.cookie('jid', token, {
     httpOnly: true,
-    path: '/'
-    // domain: '.domain.com' // For prod only!
+    path: '/',
+    domain: __prod__ ? __domain__ : 'http://localhost'
   })
 }
 
