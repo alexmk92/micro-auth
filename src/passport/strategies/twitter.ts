@@ -22,14 +22,10 @@ export const TwitterStrategy = (): Strategy => {
         user = User.create({ email: socialAccount.displayName, username: socialAccount.username })
       }
 
-      console.log('got user: ', user)
       const profile = await user.getProfile()
-      console.log('got profile')
       profile.twitterId = socialAccount.id
       profile.twitterUsername = socialAccount.username
       await transactionalEntityManager.save(profile)
-      console.log('saved profile ands returned user');
-      console.log(user)
       done(null, user)
     })
   })

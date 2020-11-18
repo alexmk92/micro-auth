@@ -13,7 +13,7 @@ export const createAccessToken = (user: User, minutesToLive?: number): string =>
 
   const permissions = user.getHasuraPermissions()
 
-  const token = sign(
+  return sign(
     {
       userId,
       ...additions,
@@ -22,8 +22,6 @@ export const createAccessToken = (user: User, minutesToLive?: number): string =>
     __secrets__.jwt,
     { expiresIn: `${ttl}m` }
   )
-  console.log(token);
-  return token
 }
 
 export const createRefreshToken = (user: User, daysToLive: number = 7): string => {
@@ -56,7 +54,7 @@ export const isAuthenticated: MiddlewareFn<PsContext> = ({ context }, next) => {
 
   try {
     const token = authorization!.split(' ')[1]
-    console.log(token)
+    console.log('trying to verify...')
     const payload = verify(token, __secrets__.jwt)
 
     context.payload = payload as any

@@ -38,6 +38,7 @@ export default function (): Router {
         throw new Error('Invalid token, login again')
       }
     } catch (e) {
+      console.error(e)
       //console.error(e)
       return loginAsGuest(res)
     }

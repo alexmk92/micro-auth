@@ -22,15 +22,15 @@ export class User extends BaseEntity {
     password!: string
 
     @Field(() => Int)
-    @Column({ default: 0, name: 'token_version' })
+    @Column({ default: 0 })
     tokenVersion: number
 
     @Field(() => String)
-    @CreateDateColumn({ name: 'created_at' })
+    @CreateDateColumn()
     createdAt: Date;
 
     @Field(() => String)
-    @UpdateDateColumn({ name: 'updated_at' })
+    @UpdateDateColumn()
     updatedAt: Date;
 
     @OneToOne(_type => Profile, { onDelete: 'CASCADE' })
