@@ -1,6 +1,7 @@
 import { HasuraPermissions, HasuraRole } from 'src/types';
 import { ObjectType, Field, Int } from 'type-graphql'
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity, getManager, OneToOne, JoinColumn } from 'typeorm'
+import { Profile } from './Profile';
 
 @ObjectType()
 @Entity()
@@ -20,33 +21,9 @@ export class User extends BaseEntity {
     @Column({ nullable: true })
     password!: string
 
-    @Field(() => String)
-    @Column({ nullable: true })
-    bio: string
-
     @Field(() => Int)
     @Column({ default: 0, name: 'token_version' })
     tokenVersion: number
-
-    @Field(() => String)
-    @Column({ nullable: true, name: 'twitter_id' })
-    twitterId: String
-
-    @Field(() => String)
-    @Column({ nullable: true, name: 'twitter_username' })
-    twitterUsername: String
-
-    @Field(() => String)
-    @Column({ nullable: true, name: 'facebook_id' })
-    facebookId: String
-
-    @Field(() => String)
-    @Column({ nullable: true, name: 'facebook_username' })
-    facebookUsername: String
-
-    @Field(() => Boolean)
-    @Column({ nullable: true, name: 'confirmed_email' })
-    confirmedEmail: boolean
 
     @Field(() => String)
     @CreateDateColumn({ name: 'created_at' })
@@ -55,6 +32,10 @@ export class User extends BaseEntity {
     @Field(() => String)
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
+
+    @OneToOne(_type => Profile, { onDelete: 'CASCADE' })
+    @JoinColumn()
+    profile: Profile
 
     validUserId = (): Boolean => {
         return this.getId() !== 'GUEST'
@@ -66,6 +47,21 @@ export class User extends BaseEntity {
         }
 
         return 'GUEST'
+    }
+
+    getProfile = async (): Promise<Profile> => {
+        const userId = this.getId()
+
+        let profile = await getManager()
+            .findOne(Profile, { where: { userId } })
+
+        if (!profile || !profile.id) {
+            profile = new Profile()
+            profile.userId = userId
+            profile = await profile.save()
+        }
+
+        return profile
     }
 
     getHasuraPermissions = (): HasuraPermissions => {

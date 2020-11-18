@@ -13,6 +13,8 @@ import routes from './routes'
 import { initCache } from './configure/cache'
 import { createConnection } from 'typeorm'
 import { User } from './entities/User'
+import { Profile } from './entities/Profile'
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies'
 
 (async () => {
     await createConnection({
@@ -23,7 +25,8 @@ import { User } from './entities/User'
         password: __db__.password,
         logging: true,
         synchronize: !__prod__,
-        entities: [User]
+        entities: [User, Profile],
+        namingStrategy: new SnakeNamingStrategy()
     })
 
     const cache = initCache()

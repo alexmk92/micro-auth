@@ -13,7 +13,7 @@ export const createAccessToken = (user: User, minutesToLive?: number): string =>
 
   const permissions = user.getHasuraPermissions()
 
-  return sign(
+  const token = sign(
     {
       userId,
       ...additions,
@@ -22,6 +22,8 @@ export const createAccessToken = (user: User, minutesToLive?: number): string =>
     __secrets__.jwt,
     { expiresIn: `${ttl}m` }
   )
+  console.log(token);
+  return token
 }
 
 export const createRefreshToken = (user: User, daysToLive: number = 7): string => {
