@@ -66,7 +66,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies'
     })
 
     app.listen(__port__, () => {
-        console.info(`Server started and listening on  localhost:${__port__}`)
+        console.info(`Server started and listening on  ${__domain__}:${__port__}`)
     })
 })().catch(e => {
     console.error(e)

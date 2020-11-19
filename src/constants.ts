@@ -43,7 +43,8 @@ export const __emailProvider__ = {
 
 export const __cacheRoots__ = {
   forgotPassword: 'forgot-password',
-  confirmAccount: 'confirm-account'
+  confirmAccount: 'confirm-account',
+  userResetTokens: 'user-reset-tokens'
 }
 
 export const __domain__ = process.env.DOMAIN || 'http://localhost:3003'

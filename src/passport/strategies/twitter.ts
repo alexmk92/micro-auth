@@ -20,9 +20,10 @@ export const TwitterStrategy = (): Strategy => {
         user = await User.findOneOrFail({ email: socialAccount.displayName })
       } catch (e) {
         user = User.create({ email: socialAccount.displayName, username: socialAccount.username })
+        user = await transactionalEntityManager.save(user)
       }
 
-      const profile = await user.getProfile()
+      const profile = await user.getProfile(transactionalEntityManager)
       profile.twitterId = socialAccount.id
       profile.twitterUsername = socialAccount.username
       await transactionalEntityManager.save(profile)

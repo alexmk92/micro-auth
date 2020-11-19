@@ -1,6 +1,6 @@
 import { HasuraPermissions, HasuraRole } from 'src/types';
 import { ObjectType, Field, Int } from 'type-graphql'
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity, getManager, OneToOne, JoinColumn } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BaseEntity } from 'typeorm'
 import { Profile } from './Profile';
 
 @ObjectType()
@@ -22,23 +22,26 @@ export class User extends BaseEntity {
     password!: string
 
     @Field(() => Int)
-    @Column({ default: 0 })
+    @Column({ default: 0, name: 'token_version' })
     tokenVersion: number
 
     @Field(() => String)
-    @CreateDateColumn()
+    @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
     @Field(() => String)
-    @UpdateDateColumn()
+    @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
-    @OneToOne(_type => Profile, { onDelete: 'CASCADE' })
-    @JoinColumn()
+    @Field(() => Profile)
     profile: Profile
 
     validUserId = (): Boolean => {
         return this.getId() !== 'GUEST'
+    }
+
+    static guest = () => {
+        return User.create({ id: 'GUEST', email: '', tokenVersion: 0 })
     }
 
     getId = (): string => {
@@ -49,16 +52,19 @@ export class User extends BaseEntity {
         return 'GUEST'
     }
 
-    getProfile = async (): Promise<Profile> => {
+    getProfile = async (entityManager?: any): Promise<Profile> => {
         const userId = this.getId()
 
-        let profile = await getManager()
-            .findOne(Profile, { where: { userId } })
+        let profile = await Profile.findOne({ where: { userId } })
 
         if (!profile || !profile.id) {
             profile = new Profile()
             profile.userId = userId
-            profile = await profile.save()
+            if (entityManager) {
+                profile = await entityManager.save(profile) as Profile
+            } else {
+                profile = await profile.save()
+            }
         }
 
         return profile

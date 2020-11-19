@@ -9,13 +9,7 @@ export default function (): Router {
   const router = Router()
 
   const loginAsGuest = async (res: Response) => {
-    let u = new User()
-    u.email = ''
-    u.id = 'GUEST'
-    u.tokenVersion = 0
-
-    console.info('Generating a guest access token')
-
+    let u = User.guest()
     sendRefreshToken(res, createRefreshToken(u))
 
     return res.send({ success: true, accessToken: createAccessToken(u) })

@@ -2,9 +2,9 @@ import { User } from '../entities/User'
 import { PsContext } from 'src/types'
 import { Resolver, Mutation, Query, Arg, Ctx, UseMiddleware } from 'type-graphql'
 import argon2 from 'argon2'
-import { __cacheRoots__, __secrets__ } from '../constants'
+import { __cacheRoots__, __domain__, __secrets__ } from '../constants'
 import { createAccessToken, createRefreshToken, isAuthenticated, sendRefreshToken } from '../auth'
-import { CredentialInput, UserResponse } from '../types.gql'
+import { ConfirmEmailResponse, CredentialInput, UserResponse } from '../types.gql'
 import { validateLogin, validateRegistration } from '../utils/validate'
 import { sendEmail } from '../utils/send-email'
 import { v4 } from 'uuid'
@@ -23,6 +23,8 @@ export class UserResolver {
     async me(@Ctx() { payload }: PsContext): Promise<UserResponse> {
         try {
             const user = await User.findOneOrFail({ id: payload!.userId })
+            user.profile = await user.getProfile()
+
             return { user }
         } catch {
             return {
@@ -78,6 +80,8 @@ export class UserResolver {
         user.password = await argon2.hash(password)
         await user.save()
         await redis.del(cacheKey)
+        // We no longer need to redirect the user to a confirmation if we reset
+        await redis.del(`${__cacheRoots__.userResetTokens}:${userId}`)
 
         sendRefreshToken(res, createRefreshToken(user!))
 
@@ -101,10 +105,16 @@ export class UserResolver {
             return true
         }
 
+        const profile = await user.getProfile()
+        if (!profile.confirmedEmail) {
+            await sendConfirmAccountEmail(user)
+        }
+
         const token = v4()
         const expiry = (1000 * 60 * 60 * 24 * 3) // 3 days
         await redis.set(`${__cacheRoots__.forgotPassword}:${token}`, user.id, 'ex', expiry)
-        const html = `<a href="http://localhost:3001/reset-password/${token}">Reset password</a> this link will expire in 3 days!`
+        await redis.set(`${__cacheRoots__.userResetTokens}:${user.id}`, token, 'ex', expiry)
+        const html = `<a href="${__domain__}/reset-password/${token}">Reset password</a> this link will expire in 3 days!`
         await sendEmail(email, 'Reset your posterspy password', html);
 
         return true
@@ -138,8 +148,7 @@ export class UserResolver {
 
         try {
             const hashedPassword = await argon2.hash(password)
-            const user = User.create({ email, password: hashedPassword, username: email })
-            await user.save()
+            const user = await User.create({ email, password: hashedPassword, username: email }).save()
 
             sendRefreshToken(res, createRefreshToken(user))
             await sendConfirmAccountEmail(user)
@@ -165,15 +174,15 @@ export class UserResolver {
 
     @Mutation(() => Boolean)
     async logout(@Ctx() { res }: PsContext): Promise<Boolean> {
-        sendRefreshToken(res, '')
+        sendRefreshToken(res, createRefreshToken(User.guest()))
         return true
     }
 
-    @Mutation(() => Boolean)
+    @Mutation(() => ConfirmEmailResponse)
     async confirmEmail(
         @Arg('token') token: String,
         @Ctx() { res, redis }: PsContext
-    ): Promise<Boolean> {
+    ): Promise<ConfirmEmailResponse> {
         try {
             const cacheKey = `${__cacheRoots__.confirmAccount}:${token}`
             const userId = await redis.get(cacheKey);
@@ -185,9 +194,19 @@ export class UserResolver {
 
             sendRefreshToken(res, createRefreshToken(user))
 
-            return true
+            return {
+                didConfirm: true,
+                resetPasswordToken: await redis.get(`${__cacheRoots__.userResetTokens}:${userId}`) || '',
+                errors: []
+            }
         } catch (e) {
-            return false
+            return {
+                didConfirm: false,
+                resetPasswordToken: '',
+                errors: [
+                    { field: 'other', message: 'Failed to confirm your account' }
+                ]
+            }
         }
     }
 

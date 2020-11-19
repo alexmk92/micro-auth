@@ -39,7 +39,7 @@ export const sendRefreshToken = (res: Response, token: string) => {
   res.cookie('jid', token, {
     httpOnly: true,
     path: '/',
-    domain: __prod__ ? __domain__ : 'http://localhost'
+    //domain: __prod__ ? __domain__ : 'http://localhost'
   })
 }
 

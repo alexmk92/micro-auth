@@ -44,3 +44,15 @@ export class UserResponse extends SessionResponse {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[]
 }
+
+@ObjectType()
+export class ConfirmEmailResponse {
+  @Field()
+  didConfirm: boolean
+
+  @Field()
+  resetPasswordToken?: string
+
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[]
+}
