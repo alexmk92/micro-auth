@@ -26,6 +26,12 @@ export const TwitterStrategy = (): Strategy => {
       const profile = await user.getProfile(transactionalEntityManager)
       profile.twitterId = socialAccount.id
       profile.twitterUsername = socialAccount.username
+      console.log(socialAccount)
+      if (!profile.avatarUrl) {
+        console.log('setting image')
+        console.log(socialAccount.photos?.shift()?.value)
+        profile.avatarUrl = socialAccount.photos?.shift()?.value
+      }
       await transactionalEntityManager.save(profile)
       done(null, user)
     })

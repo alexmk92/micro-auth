@@ -96,3 +96,5 @@ export class User extends BaseEntity {
         return permissions
     }
 }
+
+export const user = User

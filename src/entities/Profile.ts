@@ -13,41 +13,49 @@ export class Profile extends BaseEntity {
   @Column({ type: 'uuid', nullable: false })
   userId: string
 
-  @Field()
+  @Field({ nullable: true, name: 'avatar_url' })
   @Column({ nullable: true })
-  avatarUrl: string
+  avatarUrl?: string
 
-  @Field()
+  @Field({ nullable: true, name: 'cover_photo_url' })
   @Column({ nullable: true })
-  coverPhotoUrl: string
+  coverPhotoUrl?: string
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
-  bio: string
+  bio?: string
 
-  @Field(() => String)
+  @Field({ nullable: true, name: 'twitter_id' })
   @Column({ nullable: true })
-  twitterId: String
+  twitterId?: string
 
-  @Field(() => String)
+  @Field({ nullable: true, name: 'twitter_username' })
   @Column({ nullable: true })
-  twitterUsername: String
+  twitterUsername?: string
 
-  @Field(() => String)
+  @Field({ nullable: true, name: 'facebook_id' })
   @Column({ nullable: true })
-  facebookId: String
+  facebookId?: string
 
-  @Field(() => String)
+  @Field({ nullable: true, name: 'facebook_username' })
   @Column({ nullable: true })
-  facebookUsername: String
+  facebookUsername?: string
 
-  @Field(() => Boolean)
+  @Field({ nullable: true, name: 'confirmed_email' })
   @Column({ nullable: true })
-  confirmedEmail: boolean
+  confirmedEmail?: boolean
 
-  @Field(() => Boolean)
+  @Field({ nullable: true, name: 'has_setup_account' })
   @Column({ default: false })
-  hasSetupAccount: boolean
+  hasSetupAccount?: boolean
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  location?: string
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  region?: string
 
   @Field()
   @CreateDateColumn()
