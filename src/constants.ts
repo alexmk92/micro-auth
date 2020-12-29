@@ -47,4 +47,4 @@ export const __cacheRoots__ = {
   userResetTokens: 'user-reset-tokens'
 }
 
-export const __domain__ = process.env.DOMAIN || 'http://localhost:3003'
+export const __domain__ = process.env.DOMAIN || 'http://localhost:3002'

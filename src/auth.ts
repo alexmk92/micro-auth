@@ -38,7 +38,7 @@ export const createRefreshToken = (user: User, daysToLive: number = 7): string =
 export const sendRefreshToken = (res: Response, token: string) => {
   res.cookie('jid', token, {
     httpOnly: true,
-    path: '/',
+    path: '/'
     //domain: __prod__ ? __domain__ : 'http://localhost'
   })
 }
