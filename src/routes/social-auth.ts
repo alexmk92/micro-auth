@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import passport from 'passport'
-import { __domain__ } from '../constants'
+import { __frontEndDomain__ } from '../constants'
 import { providers } from '../provider-registry'
 import { sendRefreshToken } from '../auth'
 import { Response } from 'express'
@@ -26,21 +26,21 @@ export default function (): Router {
     const token: string = req.user as string
     sendRefreshToken(res, token)
 
-    res.redirect(`${__domain__}/auth/success?token=${token}`)
+    res.redirect(`${__frontEndDomain__}/auth/success?token=${token}`)
   })
 
   /**
    * Any registered providers will get "smart" loaded here.
-   * 
+   *
    * Passport will handle the authentication with the OAuth service
    * and will then call back to the passport.serializeUser method
    * which generates a refresh token, that refresh token is
-   * then forwarded to the successRedirect method which 
+   * then forwarded to the successRedirect method which
    * currently sends us back to our application.
-   * 
+   *
    * This success callback sets the jid with the newly
    * created refresh token to allow users to then
-   * request and use an access token 
+   * request and use an access token
    */
   providers.forEach(provider => {
     const { name, scope } = provider
