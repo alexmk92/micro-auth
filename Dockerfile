@@ -3,11 +3,15 @@ FROM node:12
 WORKDIR /usr/src/app
 
 COPY package.json ./package.json
-RUN yarn install
+COPY yarn.lock ./
 
-COPY ./ .
+RUN yarn
+
+COPY . .
+
+RUN yarn build
 
 # Verify that we have expected things here
 RUN ls -la
 
-CMD ["yarn", "start"]
+CMD ["npm", "run", "live-reload"]
